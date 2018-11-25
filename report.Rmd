@@ -11,75 +11,73 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-In this document, I analysed the consantration of CO2 change in the Atmosphere since 1958. You can access the original version of the data set from [this](http://scrippsco2.ucsd.edu/data/atmospheric_co2/primary_mlo_co2_record) link. Dataset is updated continuosly and I worked on the snapshot of the dataset which is taken at 11/24/2018. Snapshot of the dataset will be available with this notebook.
+In this document, I have analyzed the concentration of CO2 change in the Atmosphere since 1958. You can access the original version of the dataset from [this](http://scrippsco2.ucsd.edu/data/atmospheric_co2/primary_mlo_co2_record) link. Dataset is updated continuously and I worked on the snapshot of the dataset which is taken at 11/24/2018. Snapshot of the dataset will be available with this document to facilitate reproducibility.
 
 
 ## Loading Dataset
 
-In Data folder we have a csv file contains weekly measurements of CO2 consantration.
-CSV file contains some comments related to data so we skipped that part when we are loading the data. Also CSV file does not contain header in so after loading the dataset I added column names.
+In Data folder we have a CSV file contains weekly measurements of CO2 concentration.
+CSV file contains some comments related to data so we skipped that part when we are loading the data. Also, CSV file does not contain header so after loading the dataset I added column names.
 
 ```{r load data}
 #Loading data from CSV file
-weekly_co2_consantration = read.csv("./data/weekly_in_situ_co2_mlo.csv", header = FALSE, skip=44)
+weekly_co2_concentration = read.csv("./data/weekly_in_situ_co2_mlo.csv", header = FALSE, skip=44)
 
 #Adding header
-colnames(weekly_co2_consantration)=c("date","consantration")
+colnames(weekly_co2_concentration)=c("date","concentration")
 
-weekly_co2_consantration$date <- as.Date(weekly_co2_consantration$date,format="%Y-%m-%d")
+#Parsing date field
+weekly_co2_concentration$date <- as.Date(weekly_co2_concentration$date,format="%Y-%m-%d")
 
 ```
 
-## A First Look on Datasets
+## A First Look to the Dataset
 
-Weekly measurement dataset contains only two columns. Explanation of the columns values are given on the comment section of the csv file as following : 
+Weekly measurement dataset contains only two columns. Explanation of the column values are given on the comment section of the CSV file as follows: 
 
->The data file below contains 2 columns indicaing the date and CO2 concentrations in micro-mol CO2 per mole (ppm), reported on the 2008A SIO manometric mole fraction scale.  These weekly values have been adjusted to 12:00 hours at middle day of each weekly period as indicated by the date in the first column.
+>The data file below contains 2 columns indicating the date and CO2 concentrations in micro-mol CO2 per mole (ppm), reported on the 2008A SIO manometric mole fraction scale.  These weekly values have been adjusted to 12:00 hours at the middle day of each weekly period as indicated by the date in the first column.
 
 You can find the first few lines of the weekly measurement dataset on the following table.
 
 ```{r}
-head(weekly_co2_consantration)
+head(weekly_co2_concentration)
 ```
 
-## Observation of the Global Trend and Seasonal trend
+## Observation of the Global Trend and Seasonal Trend
 
 When we plot the weekly measurement data set we can easily observe the [Keeling Curve](https://en.wikipedia.org/wiki/Keeling_Curve).
-CO2 Concantration in the Atmosphere is increasing by years.
+CO2 Concentration in the Atmosphere is increasing by years.
 
 ```{r}
 library(ggplot2) 
 
-ggplot(weekly_co2_consantration, aes(date, consantration)) + 
+ggplot(weekly_co2_concentration, aes(date, concentration)) + 
     geom_line() + theme_bw() + 
-    ggtitle("CO2 Consantration with Time") + 
+    ggtitle("CO2 concentration with Time") + 
     theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
-When we look at the above graph, there is two trend. One is seasonal trend which makes a cycle and the other is global trend which CO2 concantration always increases with time.
+When we look at the above graph, you can observe that CO2 concentration always increases with time.
 
-When we look closer to the data there is a cycle related CO2 Concantration according to seasons. Following graph draws the CO2 concentration of 2015, 2016 ans 2017 to observe the seasonal trend better.
+When we look closer to the data there is a cycle related CO2 Concentration according to seasons.  The following graph draws the CO2 concentration of 2015, 2016 and 2017 years to observe the seasonal trend better.
 
 ```{r}
-#Filters data points of the year 2017
-weekly_co2_consantration_2017 = subset(weekly_co2_consantration, 
-                                       grepl("2015", weekly_co2_consantration$date, fixed=TRUE) | 
-                                       grepl("2016", weekly_co2_consantration$date, fixed=TRUE) |
-                                       grepl("2017", weekly_co2_consantration$date, fixed=TRUE) )
-
-ggplot(weekly_co2_consantration_2017, aes(date, consantration)) + 
+#Plotting subset of the data to see the seasonal cycle
+ggplot(weekly_co2_concentration[weekly_co2_concentration$date > "2014-12-31" & weekly_co2_concentration$date < "2018-01-01" ,], aes(date, concentration)) + 
   geom_line() + theme_bw() + 
-  ggtitle("CO2 Consantration in 2015-16-17") + 
+  ggtitle("CO2 Concentration in 2015-2016-2017") + 
   theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
-## Selection of a model to predict future CO2 concantration
+## Selection of a model to predict future CO2 concentrations
 
-I used anova function of R to compare the performance of models interms of how the model explains varience. I finished the model creation when the new model does not explain extra variance.
+I used the ANOVA function of R to compare the performance of models in terms of how the model explains the variance. I have selected the model when the new model with extra variable does not explain extra variance in the sample data.
 
-I have created 7 models. *m1* is the linear model and others(m2 to m7) are the higher order polinomial models. With the help of anova function I saw that adding 7 term did not contribute to explain variance in the data so I have chosed model 6 as my final model to predict the future.
+I have created 7 models. *m1* is the linear model and others(m2 to m7) are the higher order polynomial models. With the help of ANOVA function I saw that adding 7 terms did not contribute to explaining variance in the data so I have chosen model 6 as my final model to predict the future.
+
+(*Later, I observed that model 6 (m6) is making a strange extrapolation which is not expected. The higher order polynomial model explains the variance in the sample data better than lower order polynomial models but it is not making good future predictions. I observed this fact by experiments.*)
 
 
 ```{r}
@@ -87,36 +85,36 @@ library(ggplot2)
 library("dplyr")
 
 #We can not use date field in calculations so I am creating another field to represent date field
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index = row_number())
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index2 = row_number()^2)
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index3 = row_number()^3)
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index4 = row_number()^4)
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index5 = row_number()^5)
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index6 = row_number()^6)
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index7 = row_number()^7)
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index = row_number())
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index2 = row_number()^2)
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index3 = row_number()^3)
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index4 = row_number()^4)
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index5 = row_number()^5)
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index6 = row_number()^6)
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index7 = row_number()^7)
 
 #Creation of models
-m1 <- lm(consantration ~ index, data=weekly_co2_consantration )
-m2 <- lm(consantration ~ (index + index2), data=weekly_co2_consantration )
-m3 <- lm(consantration ~ (index + index2 + index3), data=weekly_co2_consantration )
-m4 <- lm(consantration ~ (index + index2 + index3 + index4), data=weekly_co2_consantration )
-m5 <- lm(consantration ~ (index + index2 + index3 + index4 + index5 ), data=weekly_co2_consantration )
-m6 <- lm(consantration ~ (index + index2 + index3 + index4 + index5 + index6 ), data=weekly_co2_consantration )
-m7 <- lm(consantration ~ (index + index2 + index3 + index4 + index5 + index6 + index7), data=weekly_co2_consantration )
+m1 <- lm(concentration ~ index, data=weekly_co2_concentration )
+m2 <- lm(concentration ~ (index + index2), data=weekly_co2_concentration )
+m3 <- lm(concentration ~ (index + index2 + index3), data=weekly_co2_concentration )
+m4 <- lm(concentration ~ (index + index2 + index3 + index4), data=weekly_co2_concentration )
+m5 <- lm(concentration ~ (index + index2 + index3 + index4 + index5 ), data=weekly_co2_concentration )
+m6 <- lm(concentration ~ (index + index2 + index3 + index4 + index5 + index6 ), data=weekly_co2_concentration )
+m7 <- lm(concentration ~ (index + index2 + index3 + index4 + index5 + index6 + index7), data=weekly_co2_concentration )
 
 #Comparison of models
 anova(m1,m2,m3,m4,m5,m6,m7)
 
 #Making Prediktion
-m6_predict <- data.frame(consantration = predict(m6, weekly_co2_consantration), date=weekly_co2_consantration$date)
+m6_predict <- data.frame(concentration = predict(m6, weekly_co2_concentration), date=weekly_co2_concentration$date)
 
 
 #Observation of the performance of the selected model
-ggplot(weekly_co2_consantration, aes(date, consantration)) + 
+ggplot(weekly_co2_concentration, aes(date, concentration)) + 
     geom_line(color="gray") + 
-    geom_line(color="blue",data =m6_predict, aes(date, consantration)) + 
+    geom_line(color="blue",data =m6_predict, aes(date, concentration)) + 
     theme_bw() +
-    ggtitle("CO2 Consantration with Time and Selected model") + 
+    ggtitle("CO2 Concentration with Time and the Selected Model") + 
     theme(plot.title = element_text(hjust = 0.5))
 
 
@@ -124,16 +122,16 @@ ggplot(weekly_co2_consantration, aes(date, consantration)) +
 ```
 
 
-##Prediction of CO2 concantration to 2025
+##Prediction of CO2 concentration to 2025
 
 ```{r}
 library(lubridate)
 
 #Creation of new dates to make future prediction
-lastDate =  tail(weekly_co2_consantration, 1)$date
+lastDate =  tail(weekly_co2_concentration, 1)$date
 while (!grepl("2050", lastDate, fixed=TRUE)) {
   lastDate <- lastDate + 7
-  weekly_co2_consantration[nrow(weekly_co2_consantration) + 1,] = list(lastDate,0)
+  weekly_co2_concentration[nrow(weekly_co2_concentration) + 1,] = list(lastDate,0)
 }
 
 ```
@@ -143,22 +141,22 @@ while (!grepl("2050", lastDate, fixed=TRUE)) {
 library(ggplot2) 
 library("dplyr")
 
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index = row_number())
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index2 = row_number()^2)
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index3 = row_number()^3)
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index4 = row_number()^4)
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index5 = row_number()^5)
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index6 = row_number()^6)
-weekly_co2_consantration <- weekly_co2_consantration %>% mutate(index7 = row_number()^7)
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index = row_number())
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index2 = row_number()^2)
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index3 = row_number()^3)
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index4 = row_number()^4)
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index5 = row_number()^5)
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index6 = row_number()^6)
+weekly_co2_concentration <- weekly_co2_concentration %>% mutate(index7 = row_number()^7)
 
 #Making Prediktion
-prediction_linear <- data.frame(consantration = predict(m1, weekly_co2_consantration), date=weekly_co2_consantration$date)
-prediction_quadratic <- data.frame(consantration = predict(m2, weekly_co2_consantration), date=weekly_co2_consantration$date)
-prediction_initialy_selected <- data.frame(consantration = predict(m6, weekly_co2_consantration), date=weekly_co2_consantration$date)
+prediction_linear <- data.frame(concentration = predict(m1, weekly_co2_concentration), date=weekly_co2_concentration$date)
+prediction_quadratic <- data.frame(concentration = predict(m2, weekly_co2_concentration), date=weekly_co2_concentration$date)
+prediction_initialy_selected <- data.frame(concentration = predict(m6, weekly_co2_concentration), date=weekly_co2_concentration$date)
 
-prediction3 <- data.frame(consantration = predict(m3, weekly_co2_consantration), date=weekly_co2_consantration$date)
-prediction4 <- data.frame(consantration = predict(m4, weekly_co2_consantration), date=weekly_co2_consantration$date)
-prediction5 <- data.frame(consantration = predict(m5, weekly_co2_consantration), date=weekly_co2_consantration$date)
+prediction3 <- data.frame(concentration = predict(m3, weekly_co2_concentration), date=weekly_co2_concentration$date)
+prediction4 <- data.frame(concentration = predict(m4, weekly_co2_concentration), date=weekly_co2_concentration$date)
+prediction5 <- data.frame(concentration = predict(m5, weekly_co2_concentration), date=weekly_co2_concentration$date)
 
 color_brown = "#CC7600"
 color_green = "#029900"
@@ -167,17 +165,42 @@ color_rose = "#FF8C9C"
 color_red = "#CC1F00"
 
 #Observation of the performance of the selected model
-ggplot(weekly_co2_consantration, aes(date, consantration)) + 
+ggplot(weekly_co2_concentration[weekly_co2_concentration$date < "2018-10-27",], aes(date, concentration)) + 
     geom_line(color="gray") +
-    geom_line(color=color_red,data =prediction_linear, aes(date, consantration)) + 
-    geom_line(color=color_yellow,data =prediction_quadratic, aes(date, consantration)) + 
-    geom_line(color=color_rose,data =prediction_initialy_selected, aes(date, consantration)) + 
-    geom_line(color="blue",data =prediction3, aes(date, consantration)) + 
-    geom_line(color=color_green,data =prediction4, aes(date, consantration)) + 
-    geom_line(color=color_brown,data =prediction5, aes(date, consantration)) + 
+    geom_line(color=color_red,data =prediction_linear, aes(date, concentration)) + 
+    geom_line(color=color_yellow,data =prediction_quadratic, aes(date, concentration)) + 
+    geom_line(color=color_rose,data =prediction_initialy_selected, aes(date, concentration)) + 
+    geom_line(color="blue",data =prediction3, aes(date, concentration)) + 
+    geom_line(color=color_green,data =prediction4, aes(date, concentration)) + 
+    geom_line(color=color_brown,data =prediction5, aes(date, concentration)) + 
     theme_bw() +
-    ggtitle("CO2 Consantration with Time and Selected model") + 
+    ggtitle("CO2 Concentration with Time and Predictions of Models") + 
     theme(plot.title = element_text(hjust = 0.5))
 
 ```
+
+Above graph shows the extrapolations of different models with colorful lines.
+After experiments, I decided to use model *m4* which is a polynomial model with degree 4 to extrapolate the CO2 concentration to 2025 (green line on the graph). 
+
+
+##Final Results
+
+You can see the extrapolation results of the m4 in the following plot and table.
+
+```{r}
+
+ggplot(weekly_co2_concentration[weekly_co2_concentration$date < "2018-10-27",], aes(date, concentration)) + 
+    geom_line(color="gray") +
+    geom_line(color=color_green,data =prediction4, aes(date, concentration)) + 
+    theme_bw() +
+    ggtitle("CO2 Concentration with Time and Extrapolation of the Selected Model") + 
+    theme(plot.title = element_text(hjust = 0.5))
+
+
+select(prediction4[prediction4$date > "2018-10-27" & prediction4$date < "2025-12-31" ,], "date", "concentration") 
+
+```
+
+
+
 
